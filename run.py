@@ -66,7 +66,7 @@ def get_gaze_ratio(eye_points,facial_landmarks):
     ud_gaze_ratio = (up_side_white+10) / (down_side_white+10)
     return lr_gaze_ratio,ud_gaze_ratio
 
-# log = []
+log = []
 
 while True:
     _, frame = cap.read()
@@ -91,14 +91,14 @@ while True:
         cv2.putText(frame,"x: "+str(gaze_ratio_lr),(50,100),font,2,(0,0,255),3)
         cv2.putText(frame,"y: "+str(gaze_ratio_ud),(50,150),font,2,(0,0,255),3)
         cv2.putText(frame,"Eye Size: "+str(left_eye_ratio),(50,200),font,2,(0,0,255),3)
-        # log.append([gaze_ratio_l,left_eye_ratio])
+        log.append([gaze_ratio_lr,gaze_ratio_ud,left_eye_ratio])
         cv2.imshow("Frame", frame) 
     key = cv2.waitKey(1)
     if key == ord('q'):
         break
 
-# log = np.asarray(log)
-# np.savetxt('data.csv',log,header="x,y")
+log = np.asarray(log)
+np.savetxt('data.csv',log,header="x,y,Size")
 
 cap.release()
 cv2.destroyAllWindows()
