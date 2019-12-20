@@ -2,7 +2,9 @@ import cv2
 import numpy as np
 import dlib
 from math import hypot
+from keras.models import load_model
 
+emotion_model = load_model('./model/emotion_recognition.h5')
 
 def midpoint(p1, p2):
     return int((p1.x + p2.x)/2), int((p1.y + p2.y)/2)
@@ -27,7 +29,7 @@ def get_blinking_ratio(eye_points, facial_landmarks):
     return ratio
 
 
-def get_gaze_ratio(eye_points, facial_landmarks):
+def get_gaze_ratio(eye_points, facial_landmarks,gray):
     # Gaze detection
     left_eye_region = np.array([(facial_landmarks.part(eye_points[0]).x, facial_landmarks.part(eye_points[0]).y),
                                 (facial_landmarks.part(
@@ -89,7 +91,7 @@ def detect_face(frame):
             [36, 37, 38, 39, 40, 41], landmarks)
 
         gaze_ratio_lr, gaze_ratio_ud = get_gaze_ratio(
-            [36, 37, 38, 39, 40, 41], landmarks)
+            [36, 37, 38, 39, 40, 41], landmarks,gray)
 
         benchmark.append([gaze_ratio_lr, gaze_ratio_ud, left_eye_ratio])
         cv2.putText(frame, "x: "+str(gaze_ratio_lr),
