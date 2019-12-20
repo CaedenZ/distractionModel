@@ -50,7 +50,7 @@ def get_gaze_ratio(eye_points,facial_landmarks):
     min_y = np.min(left_eye_region[:, 1])
     max_y = np.max(left_eye_region[:, 1])
     gray_eye = eye[min_y: max_y, min_x: max_x]
-    _, threshold_eye = cv2.threshold(gray_eye, 60, 255, cv2.THRESH_BINARY)
+    _, threshold_eye = cv2.threshold(gray_eye, 70, 255, cv2.THRESH_BINARY)
     
     height, width = threshold_eye.shape
     left_side_threshold = threshold_eye[0: height, 0: int(width / 2)]
@@ -62,9 +62,10 @@ def get_gaze_ratio(eye_points,facial_landmarks):
     up_side_white = cv2.countNonZero(up_side_threshold)
     down_side_threshold = threshold_eye[int(height/2): height, 0 : width]
     down_side_white = cv2.countNonZero(down_side_threshold)
-    lr_gaze_ratio = (left_side_white+10) / (right_side_white+10)
-    ud_gaze_ratio = (up_side_white+10) / (down_side_white+10)
-    return lr_gaze_ratio,ud_gaze_ratio
+    # lr_gaze_ratio = (left_side_white+10) / (right_side_white+10)
+    # ud_gaze_ratio = (up_side_white+10) / (down_side_white+10)
+    
+    return left_side_white,right_side_white,up_side_white,down_side_white
 
 log = []
 
@@ -86,7 +87,11 @@ while True:
         landmarks = predictor(gray, face)
         left_eye_ratio = get_blinking_ratio([36, 37, 38, 39, 40, 41], landmarks)
         
-        gaze_ratio_lr,gaze_ratio_ud =get_gaze_ratio([36,37,38,39,40,41],landmarks)
+        l_left_side_white,l_right_side_white,l_up_side_white,l_down_side_white =get_gaze_ratio([36,37,38,39,40,41],landmarks)
+        r_left_side_white,r_right_side_white,r_up_side_white,r_down_side_white =get_gaze_ratio([42,43,44,45,46,47],landmarks)
+
+        gaze_ratio_lr = (l_left_side_white + r_left_side_white+10) / (l_right_side_white + r_right_side_white+10)
+        gaze_ratio_ud = (l_up_side_white + r_up_side_white+10) / (l_down_side_white + r_down_side_white+10)
 
         cv2.putText(frame,"x: "+str(gaze_ratio_lr),(50,100),font,2,(0,0,255),3)
         cv2.putText(frame,"y: "+str(gaze_ratio_ud),(50,150),font,2,(0,0,255),3)
