@@ -2,15 +2,11 @@ import cv2
 import numpy as np
 import dlib
 from math import hypot
-cap = cv2.VideoCapture(0)
 
-detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
 def midpoint(p1, p2):
     return int((p1.x + p2.x)/2), int((p1.y + p2.y)/2)
 
-font = cv2.FONT_HERSHEY_SIMPLEX
 
 def get_blinking_ratio(eye_points, facial_landmarks):
     left_point = (facial_landmarks.part(
@@ -30,14 +26,19 @@ def get_blinking_ratio(eye_points, facial_landmarks):
     ratio = ver_line_lenght / hor_line_lenght
     return ratio
 
-def get_gaze_ratio(eye_points,facial_landmarks):
+
+def get_gaze_ratio(eye_points, facial_landmarks):
     # Gaze detection
     left_eye_region = np.array([(facial_landmarks.part(eye_points[0]).x, facial_landmarks.part(eye_points[0]).y),
-                        (facial_landmarks.part(eye_points[1]).x, facial_landmarks.part(eye_points[1]).y),
-                        (facial_landmarks.part(eye_points[2]).x, facial_landmarks.part(eye_points[2]).y),
-                        (facial_landmarks.part(eye_points[3]).x, facial_landmarks.part(eye_points[3]).y),
-                        (facial_landmarks.part(eye_points[4]).x, facial_landmarks.part(eye_points[4]).y),
-                        (facial_landmarks.part(eye_points[5]).x, facial_landmarks.part(eye_points[5]).y)], np.int32)
+                                (facial_landmarks.part(
+                                    eye_points[1]).x, facial_landmarks.part(eye_points[1]).y),
+                                (facial_landmarks.part(
+                                    eye_points[2]).x, facial_landmarks.part(eye_points[2]).y),
+                                (facial_landmarks.part(eye_points[3]).x,
+                                 facial_landmarks.part(eye_points[3]).y),
+                                (facial_landmarks.part(eye_points[4]).x,
+                                 facial_landmarks.part(eye_points[4]).y),
+                                (facial_landmarks.part(eye_points[5]).x, facial_landmarks.part(eye_points[5]).y)], np.int32)
 
     height, width, _ = frame.shape
     mask = np.zeros((height, width), np.uint8)
@@ -51,7 +52,7 @@ def get_gaze_ratio(eye_points,facial_landmarks):
     max_y = np.max(left_eye_region[:, 1])
     gray_eye = eye[min_y: max_y, min_x: max_x]
     _, threshold_eye = cv2.threshold(gray_eye, 60, 255, cv2.THRESH_BINARY)
-    
+
     height, width = threshold_eye.shape
     left_side_threshold = threshold_eye[0: height, 0: int(width / 2)]
     left_side_white = cv2.countNonZero(left_side_threshold)
@@ -60,18 +61,18 @@ def get_gaze_ratio(eye_points,facial_landmarks):
 
     up_side_threshold = threshold_eye[0: int(height/2), 0: int(width / 2)]
     up_side_white = cv2.countNonZero(up_side_threshold)
-    down_side_threshold = threshold_eye[int(height/2): height, 0 : width]
+    down_side_threshold = threshold_eye[int(height/2): height, 0: width]
     down_side_white = cv2.countNonZero(down_side_threshold)
     lr_gaze_ratio = (left_side_white+10) / (right_side_white+10)
     ud_gaze_ratio = (up_side_white+10) / (down_side_white+10)
-    return lr_gaze_ratio,ud_gaze_ratio
+    return lr_gaze_ratio, ud_gaze_ratio
 
-log = []
 
-while True:
-    _, frame = cap.read()
+def detect_face(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    font = cv2.FONT_HERSHEY_SIMPLEX
     faces = detector(gray)
+    benchmark = []
     for face in faces:
         x, y = face.left(), face.top()
         x1, y1 = face.right(), face.bottom()
@@ -84,21 +85,35 @@ while True:
         hor_line = cv2.line(frame, left_point, right_point, (0, 255, 0), 2)
         ver_line = cv2.line(frame, center_top, center_bottom, (0, 255, 0), 2)
         landmarks = predictor(gray, face)
-        left_eye_ratio = get_blinking_ratio([36, 37, 38, 39, 40, 41], landmarks)
-        
-        gaze_ratio_lr,gaze_ratio_ud =get_gaze_ratio([36,37,38,39,40,41],landmarks)
+        left_eye_ratio = get_blinking_ratio(
+            [36, 37, 38, 39, 40, 41], landmarks)
 
-        cv2.putText(frame,"x: "+str(gaze_ratio_lr),(50,100),font,2,(0,0,255),3)
-        cv2.putText(frame,"y: "+str(gaze_ratio_ud),(50,150),font,2,(0,0,255),3)
-        cv2.putText(frame,"Eye Size: "+str(left_eye_ratio),(50,200),font,2,(0,0,255),3)
-        log.append([gaze_ratio_lr,gaze_ratio_ud,left_eye_ratio])
-        cv2.imshow("Frame", frame) 
+        gaze_ratio_lr, gaze_ratio_ud = get_gaze_ratio(
+            [36, 37, 38, 39, 40, 41], landmarks)
+
+        benchmark.append([gaze_ratio_lr, gaze_ratio_ud, left_eye_ratio])
+        cv2.putText(frame, "x: "+str(gaze_ratio_lr),
+                    (50, 100), font, 2, (0, 0, 255), 3)
+        cv2.putText(frame, "y: "+str(gaze_ratio_ud),
+                    (50, 150), font, 2, (0, 0, 255), 3)
+        cv2.putText(frame, "Eye Size: "+str(left_eye_ratio),
+                    (50, 200), font, 2, (0, 0, 255), 3)
+        cv2.imshow("Frame", frame)
+    return benchmark
+
+
+cap = cv2.VideoCapture(0)
+detector = dlib.get_frontal_face_detector()
+predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+
+
+while True:
+    _, frame = cap.read()
+    bm = detect_face(frame)
     key = cv2.waitKey(1)
     if key == ord('q'):
         break
 
-log = np.asarray(log)
-np.savetxt('data.csv',log,header="x,y,Size")
 
 cap.release()
 cv2.destroyAllWindows()
