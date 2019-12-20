@@ -51,13 +51,8 @@ def get_gaze_ratio(eye_points, facial_landmarks):
     min_y = np.min(left_eye_region[:, 1])
     max_y = np.max(left_eye_region[:, 1])
     gray_eye = eye[min_y: max_y, min_x: max_x]
-<<<<<<< HEAD
-    _, threshold_eye = cv2.threshold(gray_eye, 60, 255, cv2.THRESH_BINARY)
-
-=======
     _, threshold_eye = cv2.threshold(gray_eye, 70, 255, cv2.THRESH_BINARY)
     
->>>>>>> 0a7b7cf542960df3b50c66b469736d645a76d271
     height, width = threshold_eye.shape
     left_side_threshold = threshold_eye[0: height, 0: int(width / 2)]
     left_side_white = cv2.countNonZero(left_side_threshold)
@@ -68,16 +63,9 @@ def get_gaze_ratio(eye_points, facial_landmarks):
     up_side_white = cv2.countNonZero(up_side_threshold)
     down_side_threshold = threshold_eye[int(height/2): height, 0: width]
     down_side_white = cv2.countNonZero(down_side_threshold)
-<<<<<<< HEAD
     lr_gaze_ratio = (left_side_white+10) / (right_side_white+10)
     ud_gaze_ratio = (up_side_white+10) / (down_side_white+10)
     return lr_gaze_ratio, ud_gaze_ratio
-=======
-    # lr_gaze_ratio = (left_side_white+10) / (right_side_white+10)
-    # ud_gaze_ratio = (up_side_white+10) / (down_side_white+10)
-    
-    return left_side_white,right_side_white,up_side_white,down_side_white
->>>>>>> 0a7b7cf542960df3b50c66b469736d645a76d271
 
 
 def detect_face(frame):
@@ -97,7 +85,6 @@ def detect_face(frame):
         hor_line = cv2.line(frame, left_point, right_point, (0, 255, 0), 2)
         ver_line = cv2.line(frame, center_top, center_bottom, (0, 255, 0), 2)
         landmarks = predictor(gray, face)
-<<<<<<< HEAD
         left_eye_ratio = get_blinking_ratio(
             [36, 37, 38, 39, 40, 41], landmarks)
 
@@ -123,21 +110,6 @@ predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 while True:
     _, frame = cap.read()
     bm = detect_face(frame)
-=======
-        left_eye_ratio = get_blinking_ratio([36, 37, 38, 39, 40, 41], landmarks)
-        
-        l_left_side_white,l_right_side_white,l_up_side_white,l_down_side_white =get_gaze_ratio([36,37,38,39,40,41],landmarks)
-        r_left_side_white,r_right_side_white,r_up_side_white,r_down_side_white =get_gaze_ratio([42,43,44,45,46,47],landmarks)
-
-        gaze_ratio_lr = (l_left_side_white + r_left_side_white+10) / (l_right_side_white + r_right_side_white+10)
-        gaze_ratio_ud = (l_up_side_white + r_up_side_white+10) / (l_down_side_white + r_down_side_white+10)
-
-        cv2.putText(frame,"x: "+str(gaze_ratio_lr),(50,100),font,2,(0,0,255),3)
-        cv2.putText(frame,"y: "+str(gaze_ratio_ud),(50,150),font,2,(0,0,255),3)
-        cv2.putText(frame,"Eye Size: "+str(left_eye_ratio),(50,200),font,2,(0,0,255),3)
-        log.append([gaze_ratio_lr,gaze_ratio_ud,left_eye_ratio])
-        cv2.imshow("Frame", frame) 
->>>>>>> 0a7b7cf542960df3b50c66b469736d645a76d271
     key = cv2.waitKey(1)
     if key == ord('q'):
         break
