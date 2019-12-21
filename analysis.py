@@ -159,17 +159,17 @@ class analysis:
 
                 # Probablities of all classes
                 # Finding class probability takes approx 0.05 seconds
-                if self.frame_count % 5 == 0:
-                    probab = self.emotion_model.predict(test_image)[0] * 100
-                    #print("--- %s seconds ---" % (time.time() - start_time))
+                # cv2.imshow('Frame',test_image)
+                probab = self.emotion_model.predict(test_image)[0] * 100
+                #print("--- %s seconds ---" % (time.time() - start_time))
 
-                    # Finding label from probabilities
-                    # Class having highest probability considered output label
-                    label = np.argmax(probab)
-                    probab_predicted = int(probab[label])
-                    predicted_emotion = emotions[label]
-                    self.frame_count = 0
-                    self.emotion = label
+                # Finding label from probabilities
+                # Class having highest probability considered output label
+                label = np.argmax(probab)
+                probab_predicted = int(probab[label])
+                predicted_emotion = emotions[label]
+                self.frame_count = 0
+                self.emotion = label
 
         self.frame_count += 1
 
