@@ -128,15 +128,15 @@ class analysis:
             emotions = {0: 'Angry', 1: 'Fear', 2: 'Happy',
                         3: 'Sad', 4: 'Surprised', 5: 'Neutral'}
             # if emotion:
-            # cv2.putText(frame, emotions[self.emotion],
-            #             (50, 150), font, 2, (0, 0, 255), 3)
-            # cv2.putText(frame, ci,
-            #             (50, 250), font, 2, (0, 0, 255), 3)
-            # cv2.imshow("Frame", frame)
+            cv2.putText(frame, emotions[self.emotion],
+                        (50, 150), font, 2, (0, 0, 255), 3)
+            cv2.putText(frame, ci,
+                        (50, 250), font, 2, (0, 0, 255), 3)
+            cv2.imshow("Frame", frame)
             self.x = gaze_ratio_lr
             self.y = gaze_ratio_ud
             self.size = left_eye_ratio
-        return ci
+        return benchmark
 
     def detect_emotion(self, gray):
         # Dictionary for emotion recognition model output and emotions
@@ -219,10 +219,9 @@ class analysis:
         # Concentration index is a percentage : max weights product = 4.5
         concentration_index = (
             emotionweights[self.emotion] * gaze_weights) / 4.5
-        # if concentration_index > 0.65:
-        #     return "You are highly engaged!"
-        # elif concentration_index > 0.25 and concentration_index <= 0.65:
-        #     return "You are engaged."
-        # else:
-        #     return "Pay attention!"
-        return concentration_index
+        if concentration_index > 0.65:
+            return "You are highly engaged!"
+        elif concentration_index > 0.25 and concentration_index <= 0.65:
+            return "You are engaged."
+        else:
+            return "Pay attention!"
