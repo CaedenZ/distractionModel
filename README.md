@@ -1,4 +1,4 @@
-## Concentration Index Generator
+# Concentration Index Generator
 
 This program is developed based on a concentration index model found in ([Sharma, P. et al., 2019. Student Engagement Detection Using Emotion Analysis, Eye Tracking and Head Movement with Machine Learning](https://arxiv.org/pdf/1909.12913.pdf)). The model calculates a CI based on a composite score of emotional detection and eye/head movement.
 
@@ -10,13 +10,13 @@ The model for emotional detection is based on:
 
 The code (66% accuracy for emotional detection- as benchmarked by Arriaga et. al.) is adapted from:
 
-# Emotional Detection
+## Emotional Detection
 
 > https://github.com/balram2697/Face-Emotion-Recognition
 
 > https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge/data
 
-# Eye Gaze Detection/Measurement
+## Eye Gaze Detection/Measurement
 
 > https://pysource.com/2019/01/07/eye-detection-gaze-controlled-keyboard-with-python-and-opencv-p-1/
 
