@@ -1,8 +1,8 @@
 # Concentration Index Generator
 
-This program is developed based on a concentration index model found in ([Sharma, P. et al., 2019. Student Engagement Detection Using Emotion Analysis, Eye Tracking and Head Movement with Machine Learning](https://arxiv.org/pdf/1909.12913.pdf)). The model calculates a CI based on a composite score of emotional detection and eye/head movement.
+This program is developed based on a concentration index model found in ([Sharma, P. et al., 2019. Student Engagement Detection Using Emotion Analysis, Eye Tracking and Head Movement with Machine Learning](https://arxiv.org/pdf/1909.12913.pdf)). The model uses the computer webcam to calculate a CI based on a composite score of emotional state and eye/head movement, and displays a real-time Engagement and Emotional Classification.
 
-The program follows the emotion weights of the original but the author have constructed a distraction index based on eye gaze and eye size. Please see the (Concentration Index.xlsx) for more information. This program does not account for head position, unlike Reddy et. al.
+The program follows the emotion weights of the original model but the authors have constructed a distraction index based on eye gaze and eye size. Please see the (Concentration Index.xlsx)for more information. This program does not account for head position, unlike Reddy et. al.
 
 The model for emotional detection is based on:
 
