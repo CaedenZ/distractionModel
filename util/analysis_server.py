@@ -213,6 +213,7 @@ class analysis:
                 gaze_weights = 2
 
         # Concentration index is a percentage : max weights product = 4.5
+        concentration_index = 0
         concentration_index = (
             emotionweights[self.emotion] * gaze_weights) / 4.5
         # if concentration_index > 0.65:
