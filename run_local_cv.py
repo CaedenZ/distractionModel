@@ -11,8 +11,8 @@ import numpy as np
 cap = cv2.VideoCapture(0)
 # use this to insert the video file instead of the camera
 # cv.VideoCapture(video_file) 
-# or
-# cv2.VideoCapture(video_file)
+# or 
+# cv2.VideoCapture(video_file) 
 
 ana = analysis()
 
