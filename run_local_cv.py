@@ -1,37 +1,69 @@
 # Run this file on CV2 in local machine to construct a Concentration Index (CI).
 # Video image will show emotion on first line, and engagement on second. Engagement/concentration classification displays either 'Pay attention', 'You are engaged' and 'you are highly engaged' based on CI. Webcam is required.
 # Analysis is in 'Util' folder.
-
+import os.path
 
 from util.analysis_realtime import analysis
 import cv2
 import numpy as np
+import argparse
+from typing import List, Optional, Union
 
 
-# Define the codec and create VideoWriter object
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('recorded_video.avi', fourcc, 20.0, (640,  480))
-out_with_result = cv2.VideoWriter('recorded_video_with_result.avi', fourcc, 20.0, (640,  480))
+# Create the parser
+parser = argparse.ArgumentParser()
+# Add an argument
+parser.add_argument('--video_path', type=Optional[Union[List[str], str]], required=False, default=None)
 
-# Initializing
-cap = cv2.VideoCapture(0)
-ana = analysis()
+# Parse the argument
+args = parser.parse_args()
 
-# Capture every frame and send to detector
-while True:
-    _, frame = cap.read()
-    out.write(frame)
-    bm = ana.detect_face(frame)
 
-    cv2.imshow("Frame", frame)
-    out_with_result.write(frame)
-    key = cv2.waitKey(1)
-# Exit if 'q' is pressed
-    if key == ord('q'):
-        break
+def run(video_path=None):
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    # get video name
+    if video_path is None:
+        video_name = 'webcam'
+    else:
+        video_name = os.path.basename(video_path)
+        # get video name without file extension
+        video_name = os.path.splitext(video_name)[0]
+    if video_path is not None:
+        cap = cv2.VideoCapture(video_path)
+    else:
+        cap = cv2.VideoCapture(0)
+        out = cv2.VideoWriter(f'{video_name}_recorded_video.avi', fourcc, 20.0, (640, 480))
 
-# Release the memory
-cap.release()
-out.release()
-out_with_result.release()
-cv2.destroyAllWindows()
+    out_with_result = cv2.VideoWriter(f'{video_name}_recorded_video_with_result.avi', fourcc, 20.0, (640, 480))
+    ana = analysis()
+    # Capture every frame and send to detector
+    while True:
+        _, frame = cap.read()
+        if video_path is None:
+            out.write(frame)
+        bm = ana.detect_face(frame)
+
+        cv2.imshow("Frame", frame)
+        out_with_result.write(frame)
+        key = cv2.waitKey(1)
+    # Exit if 'q' is pressed
+        if key == ord('q'):
+            break
+
+    # Release the memory
+    cap.release()
+    if video_path is None:
+        out.release()
+    out_with_result.release()
+    cv2.destroyAllWindows()
+
+
+if args.video_path is not None:
+    if isinstance(args.video_path, str):
+        args.video_path = [args.video_path]
+    for video_path in args.video_path:
+        run(video_path)
+else:
+    run()
+
