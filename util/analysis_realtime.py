@@ -6,7 +6,6 @@ import dlib
 from math import hypot
 from keras.models import load_model
 
-
 class analysis:
 
     # Initialise models
@@ -22,12 +21,13 @@ class analysis:
         self.emotion = 5
         self.size = 0
         self.frame_count = 0
+        self.cis = []
 
-# Function for finding midpoint of 2 points
+    # Function for finding midpoint of 2 points
     def midpoint(self, p1, p2):
-        return int((p1.x + p2.x)/2), int((p1.y + p2.y)/2)
+        return int((p1.x + p2.x) / 2), int((p1.y + p2.y) / 2)
 
-# Function for eye size
+    # Function for eye size
     def get_blinking_ratio(self, frame, eye_points, facial_landmarks):
         left_point = (facial_landmarks.part(
             eye_points[0]).x, facial_landmarks.part(eye_points[0]).y)
@@ -46,7 +46,7 @@ class analysis:
         ratio = ver_line_lenght / hor_line_lenght
         return ratio
 
-  # Gaze detection function
+    # Gaze detection function
     def get_gaze_ratio(self, frame, eye_points, facial_landmarks, gray):
 
         left_eye_region = np.array([(facial_landmarks.part(eye_points[0]).x, facial_landmarks.part(eye_points[0]).y),
@@ -58,7 +58,8 @@ class analysis:
                                      facial_landmarks.part(eye_points[3]).y),
                                     (facial_landmarks.part(eye_points[4]).x,
                                      facial_landmarks.part(eye_points[4]).y),
-                                    (facial_landmarks.part(eye_points[5]).x, facial_landmarks.part(eye_points[5]).y)], np.int32)
+                                    (facial_landmarks.part(eye_points[5]).x, facial_landmarks.part(eye_points[5]).y)],
+                                   np.int32)
 
         height, width, _ = frame.shape
         mask = np.zeros((height, width), np.uint8)
@@ -79,15 +80,15 @@ class analysis:
         right_side_threshold = threshold_eye[0: height, int(width / 2): width]
         right_side_white = cv2.countNonZero(right_side_threshold)
 
-        up_side_threshold = threshold_eye[0: int(height/2), 0: int(width / 2)]
+        up_side_threshold = threshold_eye[0: int(height / 2), 0: int(width / 2)]
         up_side_white = cv2.countNonZero(up_side_threshold)
-        down_side_threshold = threshold_eye[int(height/2): height, 0: width]
+        down_side_threshold = threshold_eye[int(height / 2): height, 0: width]
         down_side_white = cv2.countNonZero(down_side_threshold)
-        lr_gaze_ratio = (left_side_white+10) / (right_side_white+10)
-        ud_gaze_ratio = (up_side_white+10) / (down_side_white+10)
+        lr_gaze_ratio = (left_side_white + 10) / (right_side_white + 10)
+        ud_gaze_ratio = (up_side_white + 10) / (down_side_white + 10)
         return lr_gaze_ratio, ud_gaze_ratio
 
-# Main function for analysis
+    # Main function for analysis
 
     def detect_face(self, frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -117,6 +118,12 @@ class analysis:
             benchmark.append([gaze_ratio_lr, gaze_ratio_ud, left_eye_ratio])
             emotion = self.detect_emotion(gray)
             ci = self.gen_concentration_index()
+            # ci is either: "You are highly engaged!", "You are engaged.", or "Pay attention!"
+            self.cis.append(ci)
+
+            # This function does our 20/10 frames logic
+            ci = self.process_ci()
+
             # cv2.putText(frame, "x: "+str(gaze_ratio_lr),
             #             (50, 100), font, 2, (0, 0, 255), 3)
             # cv2.putText(frame, "y: "+str(gaze_ratio_ud),
@@ -135,8 +142,23 @@ class analysis:
             self.size = left_eye_ratio
         return frame
 
-# Function for detecting emotion
+    def process_ci(self):
+        # Look at the last 20 concentration indices and if they are all "Pay attention!",
+        # then the current concentration index is "Pay attention!", otherwise if the last 10 concentration indices
+        # are all "Pay attention!",
+        # then the current concentration index is "Distracted!", otherwise the current concentration index is
+        # last different concentration index
+        if len(self.cis) > 20:
+            if self.cis[-20:] == ["Pay attention!"] * 20:
+                return "Pay attention!"
+            elif self.cis[-10:] == ["Pay attention!"] * 10:
+                return "Distracted!"
+            else:
+                for ci in self.cis[::-1]:
+                    if ci != "Pay attention!":
+                        return ci
 
+    # Function for detecting emotion
     def detect_emotion(self, gray):
         # Dictionary for emotion recognition model output and emotions
         emotions = {0: 'Angry', 1: 'Fear', 2: 'Happy',
@@ -147,7 +169,7 @@ class analysis:
             gray,
             scaleFactor=1.1,
             minNeighbors=7,
-            minSize=(100, 100),)
+            minSize=(100, 100), )
         if len(faces) > 0:
             for x, y, width, height in faces:
                 cropped_face = gray[y:y + height, x:x + width]
@@ -160,7 +182,7 @@ class analysis:
                 # Finding class probability takes approx 0.05 seconds
                 if self.frame_count % 5 == 0:
                     probab = self.emotion_model.predict(test_image)[0] * 100
-                    #print("--- %s seconds ---" % (time.time() - start_time))
+                    # print("--- %s seconds ---" % (time.time() - start_time))
 
                     # Finding label from probabilities
                     # Class having highest probability considered output label
@@ -187,15 +209,14 @@ class analysis:
         emotionweights = {0: 0.25, 1: 0.3, 2: 0.6,
                           3: 0.3, 4: 0.6, 5: 0.9}
 
-
-# 	      Open Semi Close
-# Centre	5	1.5	0
-# Upright	2	1.5	0
-# Upleft	2	1.5	0
-# Right	    2	1.5	0
-# Left	    2	1.5	0
-# Downright	2	1.5	0
-# Downleft	2	1.5	0
+        # 	      Open Semi Close
+        # Centre	5	1.5	0
+        # Upright	2	1.5	0
+        # Upleft	2	1.5	0
+        # Right	    2	1.5	0
+        # Left	    2	1.5	0
+        # Downright	2	1.5	0
+        # Downleft	2	1.5	0
         gaze_weights = 0
 
         if self.size < 0.2:
@@ -208,9 +229,9 @@ class analysis:
             else:
                 gaze_weights = 2
 
-# Concentration index is a percentage : max weights product = 4.5
-        concentration_index = (
-            emotionweights[self.emotion] * gaze_weights) / 4.5
+        # Concentration index is a percentage : max weights product = 4.5
+        concentration_index = (emotionweights[self.emotion] * gaze_weights) / 4.5
+
         if concentration_index > 0.65:
             return "You are highly engaged!"
         elif concentration_index > 0.25 and concentration_index <= 0.65:
