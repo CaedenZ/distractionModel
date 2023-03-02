@@ -136,7 +136,7 @@ class analysis:
             cv2.putText(frame, emotions[self.emotion],
                         (50, 150), font, 2, (0, 0, 255), 3)
             cv2.putText(frame, ci,
-                        (50, 250), font, 2, (0, 0, 255), 3)
+                        (250, 0), font, 13, (169, 169, 169), 3) # higher x value shifts to the right and lower y value shifts up. Also, the number after the word "font" is the font size
             self.x = gaze_ratio_lr
             self.y = gaze_ratio_ud
             self.size = left_eye_ratio
@@ -233,8 +233,8 @@ class analysis:
         concentration_index = (emotionweights[self.emotion] * gaze_weights) / 4.5
 
         if concentration_index > 0.65:
-            return "You are highly engaged!"
+            return "You are highly focused!"
         elif concentration_index > 0.25 and concentration_index <= 0.65:
-            return "You are engaged."
+            return "You are focused."
         else:
             return "Pay attention!"
