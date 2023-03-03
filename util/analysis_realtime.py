@@ -6,10 +6,11 @@ import dlib
 from math import hypot
 from keras.models import load_model
 
+
 class analysis:
 
     # Initialise models
-    def __init__(self):
+    def __init__(self, frame_width, frame_height):
         self.emotion_model = load_model('./util/model/emotion_recognition.h5')
         self.detector = dlib.get_frontal_face_detector()
         self.predictor = dlib.shape_predictor(
@@ -22,6 +23,8 @@ class analysis:
         self.size = 0
         self.frame_count = 0
         self.cis = []
+        self.frame_width = frame_width
+        self.frame_height = frame_height
 
     # Function for finding midpoint of 2 points
     def midpoint(self, p1, p2):
@@ -119,6 +122,7 @@ class analysis:
             emotion = self.detect_emotion(gray)
             ci = self.gen_concentration_index()
             # ci is either: "You are highly engaged!", "You are engaged.", or "Pay attention!"
+
             self.cis.append(ci)
 
             # This function does our 20/10 frames logic
@@ -133,10 +137,22 @@ class analysis:
             emotions = {0: 'Angry', 1: 'Fear', 2: 'Happy',
                         3: 'Sad', 4: 'Surprised', 5: 'Neutral'}
             # if emotion:
-            cv2.putText(frame, emotions[self.emotion],
-                        (50, 150), font, 2, (0, 0, 255), 3)
-            cv2.putText(frame, ci,
-                        (250, 0), font, 13, (169, 169, 169), 3) # higher x value shifts to the right and lower y value shifts up. Also, the number after the word "font" is the font size
+            # cv2.putText(frame, emotions[self.emotion],
+            #             (50, 150), font, 2, (0, 0, 255), 3)
+            ci_to_color = {
+                "You are highly focused!": (102, 255, 102),
+                "You are focused.": (255, 128, 0),
+                "Distracted!": (102, 178, 255),
+                "Pay attention!": (0, 0, 255)
+
+            }
+            cv2.putText(
+                frame, ci,
+                # (50, 250), font, 2, (0, 0, 255), 3,
+                (20, 100), font, 2, ci_to_color.get(ci, (0, 0, 0)), 3
+            )
+            # higher x value shifts to the right and lower y value shifts up.
+            # Also, the number after the word "font" is the font size
             self.x = gaze_ratio_lr
             self.y = gaze_ratio_ud
             self.size = left_eye_ratio
@@ -148,10 +164,10 @@ class analysis:
         # are all "Pay attention!",
         # then the current concentration index is "Distracted!", otherwise the current concentration index is
         # last different concentration index
-        if len(self.cis) > 20:
-            if self.cis[-20:] == ["Pay attention!"] * 20:
+        if len(self.cis) > 15:
+            if self.cis[-15:] == ["Pay attention!"] * 15:
                 return "Pay attention!"
-            elif self.cis[-10:] == ["Pay attention!"] * 10:
+            elif self.cis[-7:] == ["Pay attention!"] * 7:
                 return "Distracted!"
             else:
                 for ci in self.cis[::-1]:

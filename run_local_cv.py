@@ -29,34 +29,34 @@ def run(video_path=None):
         video_name = os.path.basename(video_path)
         # get video name without file extension
         video_name = os.path.splitext(video_name)[0]
-    if video_path is not None:
-        cap = cv2.VideoCapture(video_path)
-    else:
-        cap = cv2.VideoCapture(0)
-        out = cv2.VideoWriter(f'{video_name}_recorded_video.avi', fourcc, 20.0, (640, 480))
 
-    out_with_result = cv2.VideoWriter(f'{video_name}_recorded_video_with_result.avi', fourcc, 20.0, (640, 480))
-    ana = analysis()
+    cap = cv2.VideoCapture(0 if video_path is None else video_path)
+    frame_width = int(cap.get(3))
+    frame_height = int(cap.get(4))
+    size = (frame_width, frame_height)
+    out = cv2.VideoWriter(f'{video_name}_recorded_video.avi', fourcc, 5.0, size)
+
+    out_with_result = cv2.VideoWriter(f'{video_name}_recorded_video_with_result.avi', fourcc, 5.0, size)
+    ana = analysis(frame_width=frame_width, frame_height=frame_height)
     # Capture every frame and send to detector
     while True:
         _, frame = cap.read()
-        if video_path is None:
-            out.write(frame)
-        bm = ana.detect_face(frame)
+        out.write(frame)
+        frame = ana.detect_face(frame)
 
         cv2.imshow("Frame", frame)
         out_with_result.write(frame)
         key = cv2.waitKey(1)
     # Exit if 'q' is pressed
         if key == ord('q'):
+            # Release the memory
+            cap.release()
+            out.release()
+            out_with_result.release()
+            cv2.destroyAllWindows()
             break
 
-    # Release the memory
-    cap.release()
-    if video_path is None:
-        out.release()
-    out_with_result.release()
-    cv2.destroyAllWindows()
+
 
 
 if args.video_path is not None:
