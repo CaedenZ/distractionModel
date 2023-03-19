@@ -2,18 +2,20 @@
 # Video image will show emotion on first line, and engagement on second. Engagement/concentration classification displays either 'Pay attention', 'You are engaged' and 'you are highly engaged' based on CI. Webcam is required.
 # Analysis is in 'Util' folder.
 import os.path
-
+from playsound import playsound
 from util.analysis_realtime import analysis
 import cv2
 import numpy as np
 import argparse
 from typing import List, Optional, Union
+import simpleaudio as sa
 
 
 # Create the parser
 parser = argparse.ArgumentParser()
 # Add an argument
 parser.add_argument('--video_path', type=Optional[Union[List[str], str]], required=False, default=None)
+parser.add_argument('--run_background', type=bool, required=False, default=False, help='Run the program in background')
 
 # Parse the argument
 args = parser.parse_args()
@@ -42,7 +44,7 @@ def run(video_path=None):
     while True:
         _, frame = cap.read()
         out.write(frame)
-        frame = ana.detect_face(frame)
+        frame, _ = ana.detect_face(frame)
 
         cv2.imshow("Frame", frame)
         out_with_result.write(frame)
@@ -56,9 +58,32 @@ def run(video_path=None):
             cv2.destroyAllWindows()
             break
 
+def run_background():
+    cap = cv2.VideoCapture(0)
+    frame_width = int(cap.get(3))
+    frame_height = int(cap.get(4))
+    ana = analysis(frame_width=frame_width, frame_height=frame_height)
+    # wave_obj = sa.WaveObject.from_wave_file("mixkit-magic-notification-ring-2344.wav")
+
+    # Capture every frame and send to detector
+    while True:
+        _, frame = cap.read()
+        _, ci = ana.detect_face(frame)
+        if ci == "Pay attention!":
+            playsound("mixkit-magic-notification-ring-2344.wav")
+            # play_obj = wave_obj.play()
+            # play_obj.wait_done()
 
 
+        key = cv2.waitKey(1)
+        if key == ord('q'):
+            # Release the memory
+            cap.release()
+            break
 
+
+if args.run_background:
+    run_background()
 if args.video_path is not None:
     if isinstance(args.video_path, str):
         args.video_path = [args.video_path]

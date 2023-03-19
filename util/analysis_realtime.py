@@ -98,6 +98,7 @@ class analysis:
         font = cv2.FONT_HERSHEY_SIMPLEX
         faces = self.detector(gray)
         benchmark = []
+        ci = ""
         for face in faces:
             x, y = face.left(), face.top()
             x1, y1 = face.right(), face.bottom()
@@ -156,7 +157,7 @@ class analysis:
             self.x = gaze_ratio_lr
             self.y = gaze_ratio_ud
             self.size = left_eye_ratio
-        return frame
+        return frame, ci
 
     def process_ci(self):
         # Look at the last 20 concentration indices and if they are all "Pay attention!",
