@@ -44,7 +44,9 @@ def run(video_path=None):
     while True:
         _, frame = cap.read()
         out.write(frame)
-        frame, _ = ana.detect_face(frame)
+        frame, ci = ana.detect_face(frame)
+        if ci == "Pay attention!":
+            playsound("mixkit-magic-notification-ring-2344.wav")
 
         cv2.imshow("Frame", frame)
         out_with_result.write(frame)
