@@ -165,10 +165,12 @@ class analysis:
         # are all "Pay attention!",
         # then the current concentration index is "Distracted!", otherwise the current concentration index is
         # last different concentration index
-        if len(self.cis) > 15:
-            if self.cis[-15:] == ["Pay attention!"] * 15:
+        pay_attention_frames = 40
+        distracted_frames = 15
+        if len(self.cis) > pay_attention_frames:
+            if self.cis[-pay_attention_frames:] == ["Pay attention!"] * pay_attention_frames:
                 return "Pay attention!"
-            elif self.cis[-7:] == ["Pay attention!"] * 7:
+            elif self.cis[-distracted_frames:] == ["Pay attention!"] * distracted_frames:
                 return "Distracted!"
             else:
                 for ci in self.cis[::-1]:

@@ -8,7 +8,6 @@ import cv2
 import numpy as np
 import argparse
 from typing import List, Optional, Union
-# import simpleaudio as sa
 
 
 # Create the parser
