@@ -25,3 +25,26 @@ The code (66% accuracy for emotional detection- as benchmarked by Arriaga et. al
 > Reddy, T.K. et. al, 2019. Autoencoding Convolutional Representations for Real-Time Eye-Gaze Detection.
 
 > Rodzi, A.h. et. al., 2018. Vision based Eye Closeness Classification for Driver’s Distraction and Drowsiness Using PERCLOS and Support Vector Machines: Comparative Study between RGB and Grayscale Images.
+
+
+# Setting up the project on your device
+
+Open Anaconda Prompt:
+
+1) conda create -n tarkeez
+2) conda activate tarkeez
+3) conda install python
+4) conda install pip
+5) python -m pip install "tensorflow"
+6) conda install -c conda-forge dlib
+7) pip install opencv-python
+8) pip install playsound==1.2.2
+9) "Enter the project directory on your PC"
+
+Run the program on your device and see your camera:
+
+10) python run_local_cv.py
+
+Run the program on your device in the background:
+
+11) python run_local_cv.py --run_background True
