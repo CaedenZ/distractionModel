@@ -48,3 +48,19 @@ Run the program on your device and see your camera:
 Run the program on your device in the background:
 
 11) python run_local_cv.py --run_background True
+
+
+# Setting up the project on your macOS device
+
+Use this video: https://www.youtube.com/watch?v=BEUU-icPg78 for prepping Anaconda
+
+Installing Tensorflow-MacOS (Tensorflow dependencies)
+conda install -c apple tensorflow-deps
+
+Install base TensorFlow:
+pip install tensorflow-macos
+
+Install lib:
+python3 -m pip install dlib
+
+The rest is the same as windows
