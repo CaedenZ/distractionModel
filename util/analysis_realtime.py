@@ -40,11 +40,15 @@ class analysis:
             landmarks = self.predictor(gray, face)
             self.display_messages()
         
-        
+        # Why return frame? maybe unnecessary
+        # TODO
         return frame, landmarks
 
 
     # Function for detecting emotion
+
+    # Should take in a frame and return the emotion. Replace gray with frame?
+    # TODO
     def detect_emotion(self, gray):
 
         faces = self.cascade_helper(gray)
@@ -66,6 +70,8 @@ class analysis:
         ci = self.process_ci()
         return
 
+    # Seperate Gaze function from generate ci
+    # TODO
     def gen_concentration_index(self):
         gaze_weights = 0
         if self.size < 0.2:
