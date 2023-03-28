@@ -20,10 +20,10 @@ class analysis:
             "./util/model/shape_predictor_68_face_landmarks.dat")
         self.faceCascade = cv2.CascadeClassifier(
             './util/model/haarcascade_frontalface_default.xml')
-        self.x = 0 # lr_gaze_ratio --> get_gaze_ratio()
-        self.y = 0 # ud_gaze_ratio --> get_gaze_ratio()
+        #self.x = 0 # lr_gaze_ratio --> get_gaze_ratio()
+        #self.y = 0 # ud_gaze_ratio --> get_gaze_ratio()
         self.emotion = 5
-        self.eye_ratio = 0 # ratio --> get_blinking_ratio()
+        # self.eye_ratio = 0 # ratio --> get_blinking_ratio()
         self.frame_count = 0
         self.cis = []
         self.frame_width = frame_width
@@ -35,9 +35,14 @@ class analysis:
     def detect_face(self, frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = self.detector(gray)
-
+        
+        # landmarks is considered a local variable
+        # UnboundLocalError: cannot access local variable 'landmarks' where it is not associated with a value
+        # TODO
+        
         for face in faces:
             landmarks = self.predictor(gray, face)
+            
             ci = self.display_messages()
             ci_to_color = {
                 "You are highly focused!": (102, 255, 102),
@@ -53,38 +58,38 @@ class analysis:
         return landmarks
 
     # Function for eye size
-    def get_blinking_ratio(self, eye_points, facial_landmarks):
+    def get_blinking_ratio(self, facial_landmarks):
         left_point = (facial_landmarks.part(
-            eye_points[0]).x, facial_landmarks.part(eye_points[0]).y)
+            self.eye_points[0]).x, facial_landmarks.part(self.eye_points[0]).y)
         right_point = (facial_landmarks.part(
-            eye_points[3]).x, facial_landmarks.part(eye_points[3]).y)
+            self.eye_points[3]).x, facial_landmarks.part(self.eye_points[3]).y)
         center_top = self.midpoint(facial_landmarks.part(
-            eye_points[1]), facial_landmarks.part(eye_points[2]))
+            self.eye_points[1]), facial_landmarks.part(self.eye_points[2]))
         center_bottom = self.midpoint(facial_landmarks.part(
-            eye_points[5]), facial_landmarks.part(eye_points[4]))
+            self.eye_points[5]), facial_landmarks.part(self.eye_points[4]))
         
         hor_line_lenght = hypot(
             (left_point[0] - right_point[0]), (left_point[1] - right_point[1]))
         ver_line_lenght = hypot(
             (center_top[0] - center_bottom[0]), (center_top[1] - center_bottom[1]))
-        ratio = ver_line_lenght / hor_line_lenght
+        eye_ratio = ver_line_lenght / hor_line_lenght
         # We can use ratio to define object? variable eye_ratio and maybe no need to return it Idk
-        self.eye_ratio = ratio
-        return ratio
+        # self.eye_ratio = ratio
+        return eye_ratio
     
      # Gaze detection function
-    def get_gaze_ratio(self, eye_points, facial_landmarks, frame):
+    def get_gaze_ratio(self, facial_landmarks, frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) 
-        left_eye_region = np.array([(facial_landmarks.part(eye_points[0]).x, facial_landmarks.part(eye_points[0]).y),
+        left_eye_region = np.array([(facial_landmarks.part(self.eye_points[0]).x, facial_landmarks.part(self.eye_points[0]).y),
                                     (facial_landmarks.part(
-                                        eye_points[1]).x, facial_landmarks.part(eye_points[1]).y),
+                                        self.eye_points[1]).x, facial_landmarks.part(self.eye_points[1]).y),
                                     (facial_landmarks.part(
-                                        eye_points[2]).x, facial_landmarks.part(eye_points[2]).y),
-                                    (facial_landmarks.part(eye_points[3]).x,
-                                     facial_landmarks.part(eye_points[3]).y),
-                                    (facial_landmarks.part(eye_points[4]).x,
-                                     facial_landmarks.part(eye_points[4]).y),
-                                    (facial_landmarks.part(eye_points[5]).x, facial_landmarks.part(eye_points[5]).y)],
+                                        self.eye_points[2]).x, facial_landmarks.part(self.eye_points[2]).y),
+                                    (facial_landmarks.part(self.eye_points[3]).x,
+                                     facial_landmarks.part(self.eye_points[3]).y),
+                                    (facial_landmarks.part(self.eye_points[4]).x,
+                                     facial_landmarks.part(self.eye_points[4]).y),
+                                    (facial_landmarks.part(self.eye_points[5]).x, facial_landmarks.part(self.eye_points[5]).y)],
                                    np.int32)
 
         height, width = self.frame_height, self.frame_width
@@ -117,23 +122,24 @@ class analysis:
         lr_gaze_ratio = (left_side_white + 10) / (right_side_white + 10)
         ud_gaze_ratio = (up_side_white + 10) / (down_side_white + 10)
         
-        self.x = lr_gaze_ratio
-        self.y = ud_gaze_ratio
+        # self.x = lr_gaze_ratio
+        # self.y = ud_gaze_ratio
         
         
         return lr_gaze_ratio, ud_gaze_ratio
     
     
     # Calculate weights for gaze
-    def gaze_weights(self, eye_ratio):
+    # ud_gaze_ratio is unused in calculations
+    def gaze_weights(self, eye_ratio, lr_gaze_ratio, ud_gaze_ratio):
         gaze_weights = 0
 
         if eye_ratio < 0.2:
             gaze_weights = 0
-        elif self.size > 0.2 and self.size < 0.3:
+        elif eye_ratio > 0.2 and eye_ratio < 0.3:
             gaze_weights = 1.5
         else:
-            if self.x < 2 and self.x > 1:
+            if lr_gaze_ratio < 2 and lr_gaze_ratio > 1:
                 gaze_weights = 5
             else:
                 gaze_weights = 2
@@ -168,6 +174,7 @@ class analysis:
         probab = self.emotion_model.predict(image)[0] * 100
         self.last_probab = probab
         return probab
+    
     # Function for detecting emotion
     def detect_emotion(self, frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -179,26 +186,30 @@ class analysis:
         test_image = self.preprocess_image(cropped_face)
 
         probab = self.get_emotion_probabilities(test_image)
-        label = np.argmax(probab)
+        emotion = np.argmax(probab)
+        self.emotion = emotion
+        
+        return emotion
 
-        self.update_emotion(label)
 
-
+    # What do we return here? 
+    # TODO
+    
     def display_messages(self):
         ci = self.gen_concentration_index()
         self.cis.append(ci)
         ci = self.process_ci()
         
-        return
+        return ci
 
     # Seperate Gaze function from generate ci
     # TODO
-    def gen_concentration_index(self):
+    def gen_concentration_index(self, gaze_weights, emotion):
         
         gaze_weights = gaze_weights(self.eye_ratio) 
 
         # Concentration index is a percentage : max weights product = 4.5
-        concentration_index = (self.emotions_weights[self.emotions_dictionary] * gaze_weights) / 4.5
+        concentration_index = (self.emotions_weights[emotion] * gaze_weights) / 4.5
         
         if concentration_index > 0.65:
             return "You are highly focused!"

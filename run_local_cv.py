@@ -43,6 +43,17 @@ def run(video_path=None):
     while True:
         _, frame = cap.read()
         out.write(frame)
+        landmarks = ana.detect_face(frame)
+        
+        eye_ratio = ana.get_blinking_ratio(landmarks)
+        lr_gaze_ratio, ud_gaze_ratio = ana.get_gaze_ratio(landmarks, frame)
+        
+        gaze_weights = ana.gaze_weights(eye_ratio, lr_gaze_ratio, ud_gaze_ratio)
+        emotion = ana.detect_emotion(frame)
+        
+        
+        
+        
         frame, ci = ana.detect_face(frame)
         if ci == "Pay attention!":
             playsound("mixkit-magic-notification-ring-2344.wav")
