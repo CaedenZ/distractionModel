@@ -36,6 +36,8 @@ class analysis:
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = self.detector(gray)
         
+        landmarks = self.predictor(gray, faces[0])
+        
         # landmarks is considered a local variable
         # UnboundLocalError: cannot access local variable 'landmarks' where it is not associated with a value
         # TODO
@@ -55,7 +57,11 @@ class analysis:
                 # (50, 250), font, 2, (0, 0, 255), 3,
                 (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 2, ci_to_color.get(ci, (0, 0, 0)), 3
             )
-        return landmarks
+        
+        if landmarks is not None:  # Check if landmarks is initialized
+            return landmarks
+        else:
+            return None
 
     # Function for eye size
     def get_blinking_ratio(self, facial_landmarks):
@@ -90,7 +96,7 @@ class analysis:
                                     (facial_landmarks.part(self.eye_points[4]).x,
                                      facial_landmarks.part(self.eye_points[4]).y),
                                     (facial_landmarks.part(self.eye_points[5]).x, facial_landmarks.part(self.eye_points[5]).y)],
-                                   np.int32)
+                                    np.int32)
 
         height, width = self.frame_height, self.frame_width
         mask = np.zeros((height, width), np.uint8)
@@ -198,7 +204,7 @@ class analysis:
     def display_messages(self):
         ci = self.gen_concentration_index()
         self.cis.append(ci)
-        ci = self.process_ci()
+        ci = self.process_ci() # TODO give the necessary parameters
         
         return ci
 

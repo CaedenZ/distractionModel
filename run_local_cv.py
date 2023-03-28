@@ -51,6 +51,8 @@ def run(video_path=None):
         gaze_weights = ana.gaze_weights(eye_ratio, lr_gaze_ratio, ud_gaze_ratio)
         emotion = ana.detect_emotion(frame)
         
+        # Continue the code as per the flowchart
+        # TODO
         
         
         
