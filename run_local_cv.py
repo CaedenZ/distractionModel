@@ -43,6 +43,11 @@ def run(video_path=None):
     while True:
         _, frame = cap.read()
         out.write(frame)
+        
+        # Only call the function run(frame) to return the output on the screen
+        # Everything below will be changed as per the above comment
+        # TODO
+        
         landmarks = ana.detect_face(frame)
         
         eye_ratio = ana.get_blinking_ratio(landmarks)
