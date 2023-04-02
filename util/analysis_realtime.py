@@ -6,80 +6,84 @@ from math import hypot
 from keras.models import load_model
 
 
-# Make the code general
-# Make the logic inside detect_face and create a function to run the program --> def run()
-# TODO
-
-
-
 # Global values
 # values for eye positions
 eye_points = [36, 37, 38, 39, 40, 41]
 # dictionary for emotions
 emotions_dictionary = {0: 'Angry', 1: 'Fear', 2: 'Happy', 3: 'Sad', 4: 'Surprised', 5: 'Neutral'}
 emotions_weights = {0: 0.25, 1: 0.3, 2: 0.6, 3: 0.3, 4: 0.6, 5: 0.9}
-
+# model imports
 emotion_model = load_model('./util/model/emotion_recognition.h5')
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(
         "./util/model/shape_predictor_68_face_landmarks.dat")
 faceCascade = cv2.CascadeClassifier(
         './util/model/haarcascade_frontalface_default.xml')
-    #self.x = 0 # lr_gaze_ratio --> get_gaze_ratio()
-    #self.y = 0 # ud_gaze_ratio --> get_gaze_ratio()
+# some intializations 
 emotion = 5
-    # self.eye_ratio = 0 # ratio --> get_blinking_ratio()
 frame_count = 0
 cis = []
 gaze_weights = 3 # random initialization
 
-def get_midpoint(self, p1, p2):
+
+
+def execution(frame):
+    face = detect_face(frame)
+    blinking_ratio = get_blinking_ratio(face)
+    lr_gaze_ratio, ud_gaze_ration = get_gaze_ratio(face, frame)
+    gaze_weights = gaze_weights(blinking_ratio, lr_gaze_ratio, ud_gaze_ration)
+    emotion = detect_emotion(frame)
+    ci = display_messages(gaze_weights, emotion)
+    ci_to_color = {
+            "You are highly focused!": (102, 255, 102),
+            "You are focused.": (255, 128, 0),
+            "Distracted!": (102, 178, 255),
+            "Pay attention!": (0, 0, 255)
+    }
+    cv2.putText(
+            frame, ci,
+            # (50, 250), font, 2, (0, 0, 255), 3,
+            (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 2, ci_to_color.get(ci, (0, 0, 0)), 3
+    )
+
+    return ci, frame
+
+
+def get_midpoint(p1, p2):
     return int((p1.x + p2.x) / 2), int((p1.y + p2.y) / 2)
 
 
 # The faces in a signle frame (most of the time it's one frame)
 # If there is more than one face, take the largest face (height & width)
-def detect_face(self, frame):
+def detect_face(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = self.detector(gray)
-    
-    landmarks = self.predictor(gray, faces[0])
+    faces = detector(gray)    
     
     # landmarks is considered a local variable
     # UnboundLocalError: cannot access local variable 'landmarks' where it is not associated with a value
     # TODO
+
+    landmarks = predictor(gray, faces[0])
     
     for face in faces:
-        landmarks = self.predictor(gray, face)
+        print("WE ARE IN FACES LOOP")   # it does not enter this loop
+        landmarks = predictor(gray, face)
         
-        ci = self.display_messages()
-        ci_to_color = {
-            "You are highly focused!": (102, 255, 102),
-            "You are focused.": (255, 128, 0),
-            "Distracted!": (102, 178, 255),
-            "Pay attention!": (0, 0, 255)
-        }
-        cv2.putText(
-            frame, ci,
-            # (50, 250), font, 2, (0, 0, 255), 3,
-            (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 2, ci_to_color.get(ci, (0, 0, 0)), 3
-        )
-    
     if landmarks is not None:  # Check if landmarks is initialized
         return landmarks
     else:
         return None
 
 # Function for eye size
-def get_blinking_ratio(self, facial_landmarks):
+def get_blinking_ratio( facial_landmarks):
     left_point = (facial_landmarks.part(
-        self.eye_points[0]).x, facial_landmarks.part(self.eye_points[0]).y)
+        eye_points[0]).x, facial_landmarks.part(eye_points[0]).y)
     right_point = (facial_landmarks.part(
-        self.eye_points[3]).x, facial_landmarks.part(self.eye_points[3]).y)
-    center_top = self.midpoint(facial_landmarks.part(
-        self.eye_points[1]), facial_landmarks.part(self.eye_points[2]))
-    center_bottom = self.midpoint(facial_landmarks.part(
-        self.eye_points[5]), facial_landmarks.part(self.eye_points[4]))
+        eye_points[3]).x, facial_landmarks.part(eye_points[3]).y)
+    center_top = get_midpoint(facial_landmarks.part(
+        eye_points[1]), facial_landmarks.part(eye_points[2]))
+    center_bottom = get_midpoint(facial_landmarks.part(
+        eye_points[5]), facial_landmarks.part(eye_points[4]))
     
     hor_line_lenght = hypot(
         (left_point[0] - right_point[0]), (left_point[1] - right_point[1]))
@@ -87,25 +91,24 @@ def get_blinking_ratio(self, facial_landmarks):
         (center_top[0] - center_bottom[0]), (center_top[1] - center_bottom[1]))
     eye_ratio = ver_line_lenght / hor_line_lenght
     # We can use ratio to define object? variable eye_ratio and maybe no need to return it Idk
-    # self.eye_ratio = ratio
+    # eye_ratio = ratio
     return eye_ratio
 
     # Gaze detection function
-def get_gaze_ratio(self, facial_landmarks, frame):
+def get_gaze_ratio( facial_landmarks, frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) 
-    left_eye_region = np.array([(facial_landmarks.part(self.eye_points[0]).x, facial_landmarks.part(self.eye_points[0]).y),
+    left_eye_region = np.array([(facial_landmarks.part(eye_points[0]).x, facial_landmarks.part(eye_points[0]).y),
                                 (facial_landmarks.part(
-                                    self.eye_points[1]).x, facial_landmarks.part(self.eye_points[1]).y),
+                                    eye_points[1]).x, facial_landmarks.part(eye_points[1]).y),
                                 (facial_landmarks.part(
-                                    self.eye_points[2]).x, facial_landmarks.part(self.eye_points[2]).y),
-                                (facial_landmarks.part(self.eye_points[3]).x,
-                                    facial_landmarks.part(self.eye_points[3]).y),
-                                (facial_landmarks.part(self.eye_points[4]).x,
-                                    facial_landmarks.part(self.eye_points[4]).y),
-                                (facial_landmarks.part(self.eye_points[5]).x, facial_landmarks.part(self.eye_points[5]).y)],
+                                    eye_points[2]).x, facial_landmarks.part(eye_points[2]).y),
+                                (facial_landmarks.part(eye_points[3]).x,
+                                    facial_landmarks.part(eye_points[3]).y),
+                                (facial_landmarks.part(eye_points[4]).x,
+                                    facial_landmarks.part(eye_points[4]).y),
+                                (facial_landmarks.part(eye_points[5]).x, facial_landmarks.part(eye_points[5]).y)],
                                 np.int32)
 
-    height, width = self.frame_height, self.frame_width
     mask = np.zeros((height, width), np.uint8)
     cv2.polylines(mask, [left_eye_region], True, 255, 2)
     cv2.fillPoly(mask, [left_eye_region], 255)
@@ -135,8 +138,8 @@ def get_gaze_ratio(self, facial_landmarks, frame):
     lr_gaze_ratio = (left_side_white + 10) / (right_side_white + 10)
     ud_gaze_ratio = (up_side_white + 10) / (down_side_white + 10)
     
-    # self.x = lr_gaze_ratio
-    # self.y = ud_gaze_ratio
+    # x = lr_gaze_ratio
+    # y = ud_gaze_ratio
     
     
     return lr_gaze_ratio, ud_gaze_ratio
@@ -144,7 +147,7 @@ def get_gaze_ratio(self, facial_landmarks, frame):
 
 # Calculate weights for gaze
 # ud_gaze_ratio is unused in calculations
-def gaze_weights(self, eye_ratio, lr_gaze_ratio, ud_gaze_ratio):
+def gaze_weights(eye_ratio, lr_gaze_ratio, ud_gaze_ratio):
     gaze_weights = 0
 
     if eye_ratio < 0.2:
@@ -157,12 +160,12 @@ def gaze_weights(self, eye_ratio, lr_gaze_ratio, ud_gaze_ratio):
         else:
             gaze_weights = 2
 
-    self.gaze_weights = gaze_weights
+    gaze_weights = gaze_weights
     return gaze_weights
 
 # Helper function for detect_emotion [1/4]
-def cascade_helper(self, gray):
-    return self.faceCascade.detectMultiScale(
+def cascade_helper(gray):
+    return faceCascade.detectMultiScale(
         gray,
         scaleFactor=1.1,
         minNeighbors=7,
@@ -170,59 +173,59 @@ def cascade_helper(self, gray):
     )
 
 # Helper function for detect_emotion [2/4] 
-def crop_face(self, gray, face):
+def crop_face( gray, face):
     x, y, width, height = face
     return gray[y:y + height, x:x + width]
 
 # Helper function for detect_emotion [3/4] 
-def preprocess_image(self, image):
+def preprocess_image( image):
     image = cv2.resize(image, (48, 48))
     image = image.reshape([-1, 48, 48, 1])
     image = np.multiply(image, 1.0 / 255.0)
     return image
 
 # Helper function for detect_emotion [4/4] 
-def get_emotion_probabilities(self, image):
-    if self.frame_count % 5 != 0:
-        return self.last_probab
-    probab = self.emotion_model.predict(image)[0] * 100
-    self.last_probab = probab
+def get_emotion_probabilities( image):
+    if frame_count % 5 != 0:
+        return last_probab
+    probab = emotion_model.predict(image)[0] * 100
+    last_probab = probab
     return probab
 
 # Function for detecting emotion
-def detect_emotion(self, frame):
+def detect_emotion( frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = self.cascade_helper(gray)
+    faces = cascade_helper(gray)
     if not faces:
         return
 
-    cropped_face = self.crop_face(gray, faces[0])
-    test_image = self.preprocess_image(cropped_face)
+    cropped_face = crop_face(gray, faces[0])
+    test_image = preprocess_image(cropped_face)
 
-    probab = self.get_emotion_probabilities(test_image)
+    probab = get_emotion_probabilities(test_image)
     emotion = np.argmax(probab)
-    self.emotion = emotion
+    emotion = emotion
     
     return emotion
 
-def display_messages(self):
+def display_messages():
     
     # TODO give the necessary parameters
-    ci = self.gen_concentration_index(gaze_weights, emotion)
-    self.cis.append(ci)
-    ci = self.process_ci() 
+    ci = gen_concentration_index(gaze_weights, emotion)
+    cis.append(ci)
+    ci = process_ci() 
     
     return ci
 
 # Seperate Gaze function from generate ci
 # TODO
 
-def gen_concentration_index(self, gaze_weights, emotion):
-    
-    gaze_weights = gaze_weights(self.eye_ratio) 
+def gen_concentration_index(gaze_weights, emotion):
+    eye_ratio = get_blinking_ratio
+    gaze_weights = gaze_weights(eye_ratio) 
 
     # Concentration index is a percentage : max weights product = 4.5
-    concentration_index = (self.emotions_weights[emotion] * gaze_weights) / 4.5
+    concentration_index = (emotions_weights[emotion] * gaze_weights) / 4.5
     
     if concentration_index > 0.65:
         return "You are highly focused!"
@@ -232,14 +235,14 @@ def gen_concentration_index(self, gaze_weights, emotion):
         return "Pay attention!"
 
 
-def process_ci(self):
-    if len(self.cis) > 40:
-        if self.cis[-40:] == ["Pay attention!"] * 40:
+def process_ci():
+    if len(cis) > 40:
+        if cis[-40:] == ["Pay attention!"] * 40:
             return "Pay attention!"
-        elif self.cis[-20:] == ["Pay attention!"] * 20:
+        elif cis[-20:] == ["Pay attention!"] * 20:
             return "Distracted!"
         else:
-            for ci in self.cis[::-1]:
+            for ci in cis[::-1]:
                 if ci != "Pay attention!":
                     return ci
 

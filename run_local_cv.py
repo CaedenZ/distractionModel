@@ -3,7 +3,7 @@
 # Analysis is in 'Util' folder.
 import os.path
 from playsound import playsound
-from util.analysis_realtime import analysis
+from util.analysis_realtime import execution
 import cv2
 import numpy as np
 import argparse
@@ -38,30 +38,13 @@ def run(video_path=None):
     out = cv2.VideoWriter(f'{video_name}_recorded_video.avi', fourcc, 5.0, size)
 
     out_with_result = cv2.VideoWriter(f'{video_name}_recorded_video_with_result.avi', fourcc, 5.0, size)
-    ana = analysis(frame_width=frame_width, frame_height=frame_height)
     # Capture every frame and send to detector
     while True:
         _, frame = cap.read()
         out.write(frame)
         
-        # Only call the function run(frame) to return the output on the screen
-        # Everything below will be changed as per the above comment
-        # TODO
-        
-        landmarks = ana.detect_face(frame)
-        
-        eye_ratio = ana.get_blinking_ratio(landmarks)
-        lr_gaze_ratio, ud_gaze_ratio = ana.get_gaze_ratio(landmarks, frame)
-        
-        gaze_weights = ana.gaze_weights(eye_ratio, lr_gaze_ratio, ud_gaze_ratio)
-        emotion = ana.detect_emotion(frame)
-        
-        # Continue the code as per the flowchart
-        # TODO
-        
-        
-        
-        frame, ci = ana.detect_face(frame)
+        frame, ci = execution(frame)
+
         if ci == "Pay attention!":
             playsound("mixkit-magic-notification-ring-2344.wav")
 
@@ -81,7 +64,7 @@ def run_background():
     cap = cv2.VideoCapture(0)
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
-    ana = analysis(frame_width=frame_width, frame_height=frame_height)
+    ana = execution(frame_width=frame_width, frame_height=frame_height)
     # wave_obj = sa.WaveObject.from_wave_file("mixkit-magic-notification-ring-2344.wav")
 
     # Capture every frame and send to detector
