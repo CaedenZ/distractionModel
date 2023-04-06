@@ -6,6 +6,18 @@ from math import hypot
 from keras.models import load_model
 
 
+# WORK NOTES :
+#
+# 1-
+# So we still have the problem of not detecting a face, unsolved
+# Which is, we need to account for len(face)==0
+# I tried looping the function but I got stuck in an infinite loop
+# 
+# 2- 
+# Error in line 160
+# TypeError: '<' not supported between instances of 'tuple' and 'int'
+# I still haven't explored this issue
+
 # Global values
 # values for eye positions
 eye_points = [36, 37, 38, 39, 40, 41]
@@ -27,11 +39,11 @@ gaze_weights = 3 # random initialization
 
 
 
-def execution(frame):
+def execution(frame, height, width):
     face = detect_face(frame)
     blinking_ratio = get_blinking_ratio(face)
-    lr_gaze_ratio, ud_gaze_ration = get_gaze_ratio(face, frame)
-    gaze_weights = gaze_weights(blinking_ratio, lr_gaze_ratio, ud_gaze_ration)
+    lr_gaze_ratio = get_gaze_ratio(face, frame, height, width)
+    gaze_weights = get_gaze_weights(blinking_ratio, lr_gaze_ratio)
     emotion = detect_emotion(frame)
     ci = display_messages(gaze_weights, emotion)
     ci_to_color = {
@@ -57,8 +69,10 @@ def get_midpoint(p1, p2):
 # If there is more than one face, take the largest face (height & width)
 def detect_face(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = detector(gray)    
-    
+    faces = detector(gray)
+
+    print("len(faces) = ", len(faces))
+
     # landmarks is considered a local variable
     # UnboundLocalError: cannot access local variable 'landmarks' where it is not associated with a value
     # TODO
@@ -95,7 +109,7 @@ def get_blinking_ratio( facial_landmarks):
     return eye_ratio
 
     # Gaze detection function
-def get_gaze_ratio( facial_landmarks, frame):
+def get_gaze_ratio(facial_landmarks, frame, height, width):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) 
     left_eye_region = np.array([(facial_landmarks.part(eye_points[0]).x, facial_landmarks.part(eye_points[0]).y),
                                 (facial_landmarks.part(
@@ -147,15 +161,15 @@ def get_gaze_ratio( facial_landmarks, frame):
 
 # Calculate weights for gaze
 # ud_gaze_ratio is unused in calculations
-def gaze_weights(eye_ratio, lr_gaze_ratio, ud_gaze_ratio):
+def get_gaze_weights(eye_ratio, lr_gaze_ratio):
     gaze_weights = 0
 
     if eye_ratio < 0.2:
         gaze_weights = 0
     elif eye_ratio > 0.2 and eye_ratio < 0.3:
         gaze_weights = 1.5
-    else:
-        if lr_gaze_ratio < 2 and lr_gaze_ratio > 1:
+    else: # TODO
+        if lr_gaze_ratio < 2 and lr_gaze_ratio > 1: # TypeError: '<' not supported between instances of 'tuple' and 'int'
             gaze_weights = 5
         else:
             gaze_weights = 2
@@ -196,7 +210,7 @@ def get_emotion_probabilities( image):
 def detect_emotion( frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     faces = cascade_helper(gray)
-    if not faces:
+    if not faces.any():
         return
 
     cropped_face = crop_face(gray, faces[0])
@@ -208,7 +222,7 @@ def detect_emotion( frame):
     
     return emotion
 
-def display_messages():
+def display_messages(gaze_weights, emotion):
     
     # TODO give the necessary parameters
     ci = gen_concentration_index(gaze_weights, emotion)
@@ -221,8 +235,6 @@ def display_messages():
 # TODO
 
 def gen_concentration_index(gaze_weights, emotion):
-    eye_ratio = get_blinking_ratio
-    gaze_weights = gaze_weights(eye_ratio) 
 
     # Concentration index is a percentage : max weights product = 4.5
     concentration_index = (emotions_weights[emotion] * gaze_weights) / 4.5

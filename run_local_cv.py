@@ -43,7 +43,7 @@ def run(video_path=None):
         _, frame = cap.read()
         out.write(frame)
         
-        frame, ci = execution(frame)
+        frame, ci = execution(frame, frame_height,  frame_width)
 
         if ci == "Pay attention!":
             playsound("mixkit-magic-notification-ring-2344.wav")
