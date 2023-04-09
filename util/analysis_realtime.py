@@ -7,16 +7,10 @@ from keras.models import load_model
 from typing import Optional
 
 # WORK NOTES :
-#
-# 1-
-# So we still have the problem of not detecting a face, unsolved
-# Which is, we need to account for len(face)==0
-# I tried looping the function but I got stuck in an infinite loop
-# 
-# 2- 
-# Error in line 160
-# TypeError: '<' not supported between instances of 'tuple' and 'int'
-# I still haven't explored this issue
+# 1- 
+# Error in line 199
+# AttributeError: 'tuple' object has no attribute 'any'
+# I have tried to make the faces to be taken from detect_face and use them for detec_emotions but I was unsuccessful
 
 # Global values
 # values for eye positions
